@@ -1,14 +1,21 @@
-package externaldns
+package v1
 
 import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+// +kubebuilder:validation:Optional
+// +kubebuilder:resource:shortName=pr
 
 type TTL int64
 
 type Targets []string
 
 type ProviderSpecificProperty struct {
-	Name  string
-	Value string
+	// Name of the property
+	Name string `json:"name,omitempty"`
+	// Value of the property
+	Value string `json:"value,omitempty"`
 }
 
 type Labels map[string]string
