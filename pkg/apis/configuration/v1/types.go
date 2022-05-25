@@ -44,6 +44,11 @@ type VirtualServerSpec struct {
 	HTTPSnippets   string            `json:"http-snippets"`
 	ServerSnippets string            `json:"server-snippets"`
 	Dos            string            `json:"dos"`
+	ExternalDNS    ExternalDNS       `json:"externalDNS"`
+}
+
+type ExternalDNS struct {
+	Enable bool `json:"enable"`
 }
 
 // PolicyReference references a policy by name and an optional namespace.
