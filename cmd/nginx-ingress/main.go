@@ -194,6 +194,9 @@ var (
 	enableCertManager = flag.Bool("enable-cert-manager", false,
 		"Enable cert-manager controller for VirtualServer resources. Requires -enable-custom-resources")
 
+	enableExternalDNS = flag.Bool("enable-externaldns", false,
+		"Enable externaldns controller for VirtualServer resources. Requires -enable-custom-resources")
+
 	startupCheckFn func() error
 )
 
