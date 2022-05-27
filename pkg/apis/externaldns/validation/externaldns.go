@@ -3,24 +3,29 @@ package validation
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
 // verifyDNSRecordType checks if provided record is a valid DNS record type.
+// Valid records match the list of records implemented by the external-dns project.
 func verifyDNSRecordType(record string) error {
-	validRecords := map[string]bool{
-		"A":     true,
-		"CNAME": true,
-		"TXT":   true,
-		"SRV":   true,
-		"NS":    true,
-		"PTR":   true,
+	validRecords := []string{"A", "CNAME", "TXT", "SRV", "NS", "PTR"}
+	records := make(map[string]bool, len(validRecords))
+	for _, r := range validRecords {
+		records[r] = true
 	}
-	_, ok := validRecords[record]
+	_, ok := records[record]
 	if !ok {
-		return fmt.Errorf("invalid DNS record: %s", record)
+		return &field.Error{
+			Type:     field.ErrorTypeNotSupported,
+			Field:    "RecordType",
+			BadValue: record,
+			Detail:   fmt.Sprintf("Supported values: %s", strings.Join(validRecords, ", ")),
+		}
 	}
 	return nil
 }
@@ -62,6 +67,7 @@ func verifyDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
 	return nil
 }
 
+// ValidateDNSEnpoints takes dnsendpoint and validates its fiels.
 func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) (err error) {
 	defer func() {
 		if err != nil {
