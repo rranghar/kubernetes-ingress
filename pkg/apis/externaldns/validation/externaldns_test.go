@@ -10,8 +10,22 @@ import (
 
 func TestVerifyDNSRecord_ErrorsOnInvalidRecordType(t *testing.T) {
 	t.Parallel()
-
 	err := verifyDNSRecordType("B")
+	if err == nil {
+		t.Fatal(err)
+	}
+	if err != nil {
+		var fieldErr *field.Error
+		if !errors.As(err, &fieldErr) {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestVerifyTargets_ErrorsOnInvalidIP(t *testing.T) {
+	t.Parallel()
+	invalidTargets := v1.Targets{"10.12.34.1111"}
+	err := verifyTargets(invalidTargets)
 	if err == nil {
 		t.Fatal(err)
 	}
