@@ -53,6 +53,11 @@ spec:
               properties:
                 dos:
                   type: string
+                externalDNS:
+                  type: object
+                  properties:
+                    enable:
+                      type: boolean
                 host:
                   type: string
                 http-snippets:
