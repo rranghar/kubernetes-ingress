@@ -1,10 +1,27 @@
 package validation
 
 import (
+	"errors"
 	"testing"
 
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 )
+
+func TestVerifyDNSRecord_ErrorsOnInvalidRecordType(t *testing.T) {
+	t.Parallel()
+
+	err := verifyDNSRecordType("B")
+	if err == nil {
+		t.Fatal(err)
+	}
+	if err != nil {
+		var fieldErr *field.Error
+		if !errors.As(err, &fieldErr) {
+			t.Fatal(err)
+		}
+	}
+}
 
 func TestVerifyEndpoint(t *testing.T) {
 	tt := []struct {
