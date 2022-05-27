@@ -4,23 +4,28 @@ import metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-// +kubebuilder:validation:Optional
-// +kubebuilder:resource:shortName=pr
 
-type TTL int64
+// DNSEndpoint is the CRD wrapper for Endpoint
+// +k8s:openapi-gen=true
+// +kubebuilder:resource:path=dnsendpoints
+// +kubebuilder:subresource:status
+type DNSEndpoint struct {
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-type Targets []string
-
-type ProviderSpecificProperty struct {
-	// Name of the property
-	Name string `json:"name,omitempty"`
-	// Value of the property
-	Value string `json:"value,omitempty"`
+	Spec   DNSEndpointSpec   `json:"spec,omitempty"`
+	Status DNSEndpointStatus `json:"status,omitempty"`
 }
 
-type Labels map[string]string
+type DNSEndpointStatus struct {
+	// The generation observed by by the external-dns controller.
+	// +optional
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+}
 
-type ProviderSpecific []ProviderSpecificProperty
+type DNSEndpointSpec struct {
+	Endpoints []*Endpoint `json:"endpoints,omitempty"`
+}
 
 type Endpoint struct {
 	// The hostname for the DNS record
@@ -44,27 +49,27 @@ type Endpoint struct {
 	ProviderSpecific ProviderSpecific `json:"providerSpecific,omitempty"`
 }
 
-type DNSEndpointSpec struct {
-	Endpoints []*Endpoint `json:"endpoints,omitempty"`
+type ProviderSpecific []ProviderSpecificProperty
+
+type ProviderSpecificProperty struct {
+	// Name of the property
+	Name string `json:"name,omitempty"`
+	// Value of the property
+	Value string `json:"value,omitempty"`
 }
 
-type DNSEndpointStatus struct {
-	// The generation observed by by the external-dns controller.
-	// +optional
-	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
-}
+type TTL int64
 
-// +genclient
+type Targets []string
+
+type Labels map[string]string
+
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// DNSEndpoint is the CRD wrapper for Endpoint
-// +k8s:openapi-gen=true
-// +kubebuilder:resource:path=dnsendpoints
-// +kubebuilder:subresource:status
-type DNSEndpoint struct {
-	metav1.TypeMeta   `json:",inline"`
-	metav1.ObjectMeta `json:"metadata,omitempty"`
+// DNSEndpointList is a list of the DNSEndpoint resources.
+type DNSEndpointList struct {
+	metav1.TypeMeta `json:",inline"`
+	metav1.ListMeta `json:"metadata"`
 
-	Spec   DNSEndpointSpec   `json:"spec,omitempty"`
-	Status DNSEndpointStatus `json:"status,omitempty"`
+	Items []DNSEndpoint `json:"items"`
 }
