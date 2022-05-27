@@ -37,6 +37,21 @@ func TestVerifyTargets_ErrorsOnInvalidIP(t *testing.T) {
 	}
 }
 
+func TestVerifyDNSname_ErrorsOnInvalidName(t *testing.T) {
+	t.Parallel()
+	invalidName := "abc.example..."
+	err := verifyDNSName(invalidName)
+	if err == nil {
+		t.Fatal(err)
+	}
+	if err != nil {
+		var fieldErr *field.Error
+		if !errors.As(err, &fieldErr) {
+			t.Fatal(err)
+		}
+	}
+}
+
 func TestVerifyEndpoint(t *testing.T) {
 	tt := []struct {
 		name  string

@@ -1,7 +1,6 @@
 package validation
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -24,7 +23,7 @@ func verifyDNSRecordType(record string) error {
 			Type:     field.ErrorTypeNotSupported,
 			Field:    "RecordType",
 			BadValue: record,
-			Detail:   fmt.Sprintf("Supported values: %s", strings.Join(validRecords, ", ")),
+			Detail:   fmt.Sprintf("supported values: %s", strings.Join(validRecords, ", ")),
 		}
 	}
 	return nil
@@ -32,7 +31,16 @@ func verifyDNSRecordType(record string) error {
 
 // verifyDNSName checks if provided string represents a valid DNS name.
 func verifyDNSName(s string) error {
-	return nil
+	result := validation.IsDNS1123Subdomain(s)
+	if len(result) == 0 {
+		return nil
+	}
+	return &field.Error{
+		Type:     field.ErrorTypeInvalid,
+		Field:    "DNSName",
+		BadValue: s,
+		Detail:   strings.Join(result, ", "),
+	}
 }
 
 // vaerifyTargets checks if targets represent valid IP adresses.
@@ -53,7 +61,7 @@ func verifyTargets(targets v1.Targets) error {
 	return nil
 }
 
-// verifyEndpoint
+// verifyEndpoint checks if all Endpoint fields are valid.
 func verifyEndpoint(e *v1.Endpoint) error {
 	if err := verifyTargets(e.Targets); err != nil {
 		return err
@@ -61,13 +69,17 @@ func verifyEndpoint(e *v1.Endpoint) error {
 	if err := verifyDNSRecordType(e.RecordType); err != nil {
 		return err
 	}
-
 	return nil
 }
 
+// verif
 func verifyDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
 	if len(es.Endpoints) == 0 {
-		return errors.New("endpoints not provided")
+		return &field.Error{
+			Type:  field.ErrorTypeRequired,
+			Field: "Endpoints",
+		}
+		//return errors.New("endpoints not provided")
 	}
 	return nil
 }
