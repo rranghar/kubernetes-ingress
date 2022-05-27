@@ -61,8 +61,24 @@ func verifyTargets(targets v1.Targets) error {
 	return nil
 }
 
+// verifyTTL checks if TTL value is > 0.
+func verifyTTL(ttl v1.TTL) error {
+	if ttl <= 0 {
+		return &field.Error{
+			Type:     field.ErrorTypeInvalid,
+			Field:    "TTL",
+			BadValue: ttl,
+			Detail:   "ttl value should be > 0",
+		}
+	}
+	return nil
+}
+
 // verifyEndpoint checks if all Endpoint fields are valid.
 func verifyEndpoint(e *v1.Endpoint) error {
+	if err := verifyDNSName(e.DNSName); err != nil {
+		return err
+	}
 	if err := verifyTargets(e.Targets); err != nil {
 		return err
 	}
@@ -72,14 +88,15 @@ func verifyEndpoint(e *v1.Endpoint) error {
 	return nil
 }
 
-// verif
+// verifyDNSEndpointSpec checks if endpoints are provided.
 func verifyDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
 	if len(es.Endpoints) == 0 {
 		return &field.Error{
-			Type:  field.ErrorTypeRequired,
-			Field: "Endpoints",
+			Type:     field.ErrorTypeRequired,
+			Field:    "Endpoints",
+			BadValue: es,
+			Detail:   "endpoints not provided",
 		}
-		//return errors.New("endpoints not provided")
 	}
 	return nil
 }

@@ -12,7 +12,7 @@ func TestVerifyDNSRecord_ErrorsOnInvalidRecordType(t *testing.T) {
 	t.Parallel()
 	err := verifyDNSRecordType("B")
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("verify invalid DNS record types should return error")
 	}
 	if err != nil {
 		var fieldErr *field.Error
@@ -27,7 +27,7 @@ func TestVerifyTargets_ErrorsOnInvalidIP(t *testing.T) {
 	invalidTargets := v1.Targets{"10.12.34.1111"}
 	err := verifyTargets(invalidTargets)
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("verify invalid targets should return error")
 	}
 	if err != nil {
 		var fieldErr *field.Error
@@ -42,13 +42,43 @@ func TestVerifyDNSname_ErrorsOnInvalidName(t *testing.T) {
 	invalidName := "abc.example..."
 	err := verifyDNSName(invalidName)
 	if err == nil {
-		t.Fatal(err)
+		t.Fatal("verify invalid DNS name should return error")
 	}
 	if err != nil {
 		var fieldErr *field.Error
 		if !errors.As(err, &fieldErr) {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestVerifyDNSEndpointSpec_ErrorOnEmptyEndpoints(t *testing.T) {
+	t.Parallel()
+	endpotintSpec := &v1.DNSEndpointSpec{
+		Endpoints: []*v1.Endpoint{},
+	}
+	err := verifyDNSEndpointSpec(endpotintSpec)
+	if err == nil {
+		t.Fatal("verify empty endpoints should return error")
+	}
+}
+
+func TestVerifyTTL_ErrorsOnInvalidTTLValue(t *testing.T) {
+	t.Parallel()
+	invalidInputs := []v1.TTL{-1, 0}
+	for _, input := range invalidInputs {
+		t.Run("invalid ttl input", func(t *testing.T) {
+			err := verifyTTL(input)
+			if err == nil {
+				t.Fatal("verify invalid TTL should return error")
+			}
+			if err != nil {
+				var fieldErr *field.Error
+				if !errors.As(err, &fieldErr) {
+					t.Fatal(err)
+				}
+			}
+		})
 	}
 }
 
