@@ -61,7 +61,7 @@ func TestVerifyDNSEndpointSpec_ErrorOnEmptyEndpoints(t *testing.T) {
 	}
 	if err != nil {
 		var fieldErr *field.Error
-		if errors.As(err, &fieldErr) {
+		if !errors.As(err, &fieldErr) {
 			t.Fatal(err)
 		}
 	}
