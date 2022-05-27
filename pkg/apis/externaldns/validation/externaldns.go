@@ -85,6 +85,9 @@ func verifyEndpoint(e *v1.Endpoint) error {
 	if err := verifyDNSRecordType(e.RecordType); err != nil {
 		return err
 	}
+	if err := verifyTTL(e.RecordTTL); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -95,23 +98,21 @@ func verifyDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
 			Type:     field.ErrorTypeRequired,
 			Field:    "Endpoints",
 			BadValue: es,
-			Detail:   "endpoints not provided",
+			Detail:   "a list of endpoints",
+		}
+	}
+	for _, endpoint := range es.Endpoints {
+		if err := verifyEndpoint(endpoint); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// ValidateDNSEnpoints takes dnsendpoint and validates its fiels.
-func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) (err error) {
-	defer func() {
-		if err != nil {
-			err = fmt.Errorf("error validating DNSEndpoint: %w", err)
-		}
-	}()
-
+// ValidateDNSEnpoint validates if all DNSEndpoint fields are valid.
+func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
 	if err := verifyDNSEndpointSpec(&dnsendpoint.Spec); err != nil {
-		return err
+		return fmt.Errorf("error validating DNSEndpoint: %w", err)
 	}
-
 	return nil
 }

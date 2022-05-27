@@ -54,12 +54,16 @@ func TestVerifyDNSname_ErrorsOnInvalidName(t *testing.T) {
 
 func TestVerifyDNSEndpointSpec_ErrorOnEmptyEndpoints(t *testing.T) {
 	t.Parallel()
-	endpotintSpec := &v1.DNSEndpointSpec{
-		Endpoints: []*v1.Endpoint{},
-	}
+	endpotintSpec := &v1.DNSEndpointSpec{}
 	err := verifyDNSEndpointSpec(endpotintSpec)
 	if err == nil {
-		t.Fatal("verify empty endpoints should return error")
+		t.Fatal("verify empty DNS endpoint spec should return error")
+	}
+	if err != nil {
+		var fieldErr *field.Error
+		if errors.As(err, &fieldErr) {
+			t.Fatal(err)
+		}
 	}
 }
 
@@ -82,26 +86,60 @@ func TestVerifyTTL_ErrorsOnInvalidTTLValue(t *testing.T) {
 	}
 }
 
-func TestVerifyEndpoint(t *testing.T) {
+func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 	tt := []struct {
 		name  string
 		input v1.Endpoint
 	}{
 		{
-			name: "Returns error on invalid endpoint targets",
+			name: "Invalid DNS Name",
 			input: v1.Endpoint{
 				DNSName:    "",
-				Targets:    []string{"1000.1.1.1"},
+				Targets:    []string{"10.10.1.1"},
 				RecordType: "A",
 				RecordTTL:  3600,
+			},
+		},
+		{
+			name: "Invalid target",
+			input: v1.Endpoint{
+				DNSName:    "example.com",
+				Targets:    []string{"1111.1.2.3"},
+				RecordType: "CNAME",
+				RecordTTL:  1800,
+			},
+		},
+		{
+			name: "Invalid record type",
+			input: v1.Endpoint{
+				DNSName:    "example.com",
+				Targets:    []string{"10.1.2.3"},
+				RecordType: "XYZ",
+				RecordTTL:  1800,
+			},
+		},
+		{
+			name: "Invalid record TTL",
+			input: v1.Endpoint{
+				DNSName:    "example.co.uk",
+				Targets:    []string{"123.10.2.3"},
+				RecordType: "A",
+				RecordTTL:  0,
 			},
 		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			if err := verifyEndpoint(&tc.input); err == nil {
-				t.Fatal(err)
+			err := verifyEndpoint(&tc.input)
+			if err == nil {
+				t.Fatalf("want err on %v", tc.name)
+			}
+			if err != nil {
+				var fieldErr *field.Error
+				if !errors.As(err, &fieldErr) {
+					t.Fatal(err)
+				}
 			}
 		})
 	}
