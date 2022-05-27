@@ -43,7 +43,12 @@ func verifyTargets(targets v1.Targets) error {
 		if len(result) == 0 {
 			continue
 		}
-		return errors.New(result[0])
+		return &field.Error{
+			Type:     field.ErrorTypeInvalid,
+			Field:    "Targets",
+			BadValue: target,
+			Detail:   result[0],
+		}
 	}
 	return nil
 }
