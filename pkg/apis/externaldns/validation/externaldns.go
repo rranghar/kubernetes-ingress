@@ -17,8 +17,7 @@ func verifyDNSRecordType(record string) error {
 	for _, r := range validRecords {
 		records[r] = true
 	}
-	_, ok := records[record]
-	if !ok {
+	if _, ok := records[record]; !ok {
 		return &field.Error{
 			Type:     field.ErrorTypeNotSupported,
 			Field:    "RecordType",
@@ -57,6 +56,24 @@ func verifyTargets(targets v1.Targets) error {
 			BadValue: target,
 			Detail:   result[0],
 		}
+	}
+	return isUnique(targets)
+}
+
+// isUnique checks if targets (IP adresses) are not duplicated.
+// It returns error if targets has a duplicated entry.
+func isUnique(targets v1.Targets) error {
+	occured := make(map[string]bool)
+	for i := 0; i < len(targets); i++ {
+		if occured[targets[i]] {
+			return &field.Error{
+				Type:     field.ErrorTypeDuplicate,
+				Field:    "Targets",
+				BadValue: targets[i],
+				Detail:   "expected unique targets",
+			}
+		}
+		occured[targets[i]] = true
 	}
 	return nil
 }
