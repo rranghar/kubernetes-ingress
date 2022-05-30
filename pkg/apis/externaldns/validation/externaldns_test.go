@@ -14,11 +14,12 @@ func TestVerifyDNSRecord_ErrorsOnInvalidRecordType(t *testing.T) {
 	if err == nil {
 		t.Fatal("verify invalid DNS record types should return error")
 	}
-	if err != nil {
-		var fieldErr *field.Error
-		if !errors.As(err, &fieldErr) {
-			t.Fatal(err)
-		}
+	var fieldErr *field.Error
+	if !errors.As(err, &fieldErr) {
+		t.Fatal(err)
+	}
+	if fieldErr.Type != field.ErrorTypeNotSupported {
+		t.Fatal()
 	}
 }
 
@@ -29,27 +30,29 @@ func TestVerifyTargets_ErrorsOnInvalidTarget(t *testing.T) {
 	if err == nil {
 		t.Fatal("verify invalid targets should return error")
 	}
-	if err != nil {
-		var fieldErr *field.Error
-		if !errors.As(err, &fieldErr) {
-			t.Fatal(err)
-		}
+
+	var fieldErr *field.Error
+	if !errors.As(err, &fieldErr) {
+		t.Fatal(err)
+	}
+	if fieldErr.Type != field.ErrorTypeInvalid {
+		t.Fatal(err)
 	}
 }
 
 func TestVerifyTargets_ErrorsOnDuplicatedTarget(t *testing.T) {
 	t.Parallel()
 	input := v1.Targets{"10.2.3.1", "10.3.45.3", "10.2.3.3", "10.3.45.3"}
-
 	err := verifyTargets(input)
 	if err == nil {
 		t.Fatalf("should return error on duplicate target %v", input)
 	}
-	if err != nil {
-		var fieldErr *field.Error
-		if !errors.As(err, &fieldErr) {
-			t.Fatal(err)
-		}
+	var fieldErr *field.Error
+	if !errors.As(err, &fieldErr) {
+		t.Fatal(err)
+	}
+	if fieldErr.Type != field.ErrorTypeDuplicate {
+		t.Fatal(err)
 	}
 }
 
@@ -60,11 +63,12 @@ func TestVerifyDNSname_ErrorsOnInvalidName(t *testing.T) {
 	if err == nil {
 		t.Fatal("verify invalid DNS name should return error")
 	}
-	if err != nil {
-		var fieldErr *field.Error
-		if !errors.As(err, &fieldErr) {
-			t.Fatal(err)
-		}
+	var fieldErr *field.Error
+	if !errors.As(err, &fieldErr) {
+		t.Fatal(err)
+	}
+	if fieldErr.Type != field.ErrorTypeInvalid {
+		t.Fatal(err)
 	}
 }
 
@@ -75,11 +79,12 @@ func TestVerifyDNSEndpointSpec_ErrorOnEmptyEndpoints(t *testing.T) {
 	if err == nil {
 		t.Fatal("verify empty DNS endpoint spec should return error")
 	}
-	if err != nil {
-		var fieldErr *field.Error
-		if !errors.As(err, &fieldErr) {
-			t.Fatal(err)
-		}
+	var fieldErr *field.Error
+	if !errors.As(err, &fieldErr) {
+		t.Fatal(err)
+	}
+	if fieldErr.Type != field.ErrorTypeRequired {
+		t.Fatal(err)
 	}
 }
 
@@ -115,11 +120,12 @@ func TestVerifyTTL_ErrorsOnInvalidTTLValue(t *testing.T) {
 			if err == nil {
 				t.Fatal("verify invalid TTL should return error")
 			}
-			if err != nil {
-				var fieldErr *field.Error
-				if !errors.As(err, &fieldErr) {
-					t.Fatal(err)
-				}
+			var fieldErr *field.Error
+			if !errors.As(err, &fieldErr) {
+				t.Fatal(err)
+			}
+			if fieldErr.Type != field.ErrorTypeInvalid {
+				t.Fatal(err)
 			}
 		})
 	}
@@ -183,12 +189,11 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			if err == nil {
 				t.Fatalf("want err on %v", tc.name)
 			}
-			if err != nil {
-				var fieldErr *field.Error
-				if !errors.As(err, &fieldErr) {
-					t.Fatal(err)
-				}
+			var fieldErr *field.Error
+			if !errors.As(err, &fieldErr) {
+				t.Fatal(err)
 			}
+
 		})
 	}
 }
