@@ -22,12 +22,28 @@ func TestVerifyDNSRecord_ErrorsOnInvalidRecordType(t *testing.T) {
 	}
 }
 
-func TestVerifyTargets_ErrorsOnInvalidIP(t *testing.T) {
+func TestVerifyTargets_ErrorsOnInvalidTarget(t *testing.T) {
 	t.Parallel()
 	invalidTargets := v1.Targets{"10.12.34.1111"}
 	err := verifyTargets(invalidTargets)
 	if err == nil {
 		t.Fatal("verify invalid targets should return error")
+	}
+	if err != nil {
+		var fieldErr *field.Error
+		if !errors.As(err, &fieldErr) {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestVerifyTargets_ErrorsOnDuplicatedTarget(t *testing.T) {
+	t.Parallel()
+	input := v1.Targets{"10.2.3.1", "10.3.45.3", "10.2.3.3", "10.3.45.3"}
+
+	err := verifyTargets(input)
+	if err == nil {
+		t.Fatalf("should return error on duplicate target %v", input)
 	}
 	if err != nil {
 		var fieldErr *field.Error
@@ -64,6 +80,29 @@ func TestVerifyDNSEndpointSpec_ErrorOnEmptyEndpoints(t *testing.T) {
 		if !errors.As(err, &fieldErr) {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestVerifyDNSEndpointSpec_ValidEndpoints(t *testing.T) {
+	t.Parallel()
+	endpointSpec := &v1.DNSEndpointSpec{
+		Endpoints: []*v1.Endpoint{
+			{
+				DNSName:    "example.com",
+				Targets:    []string{"10.23.44.5"},
+				RecordType: "A",
+				RecordTTL:  1800,
+			},
+			{
+				DNSName:    "example.co.uk",
+				Targets:    []string{"10.24.12.1"},
+				RecordType: "A",
+				RecordTTL:  3600,
+			},
+		},
+	}
+	if err := verifyDNSEndpointSpec(endpointSpec); err != nil {
+		t.Fatal(err)
 	}
 }
 
@@ -125,6 +164,15 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 				Targets:    []string{"123.10.2.3"},
 				RecordType: "A",
 				RecordTTL:  0,
+			},
+		},
+		{
+			name: "Duplicated target",
+			input: v1.Endpoint{
+				DNSName:    "example.ie",
+				Targets:    []string{"142.10.12.3", "10.23.2.3", "142.10.12.3"},
+				RecordType: "Targets",
+				RecordTTL:  1800,
 			},
 		},
 	}
