@@ -19,7 +19,7 @@ func TestVerifyDNSRecord_ErrorsOnInvalidRecordType(t *testing.T) {
 		t.Fatal(err)
 	}
 	if fieldErr.Type != field.ErrorTypeNotSupported {
-		t.Fatal()
+		t.Fatal(err)
 	}
 }
 
