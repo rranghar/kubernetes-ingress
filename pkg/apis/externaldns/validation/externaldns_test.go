@@ -30,7 +30,6 @@ func TestVerifyTargets_ErrorsOnInvalidTarget(t *testing.T) {
 	if err == nil {
 		t.Fatal("verify invalid targets should return error")
 	}
-
 	var fieldErr *field.Error
 	if !errors.As(err, &fieldErr) {
 		t.Fatal(err)
@@ -115,29 +114,29 @@ func TestVerifyTTL_ErrorsOnInvalidTTLValue(t *testing.T) {
 	t.Parallel()
 	invalidInputs := []v1.TTL{-1, 0}
 	for _, input := range invalidInputs {
-		t.Run("invalid ttl input", func(t *testing.T) {
-			err := verifyTTL(input)
-			if err == nil {
-				t.Fatal("verify invalid TTL should return error")
-			}
-			var fieldErr *field.Error
-			if !errors.As(err, &fieldErr) {
-				t.Fatal(err)
-			}
-			if fieldErr.Type != field.ErrorTypeInvalid {
-				t.Fatal(err)
-			}
-		})
+		err := verifyTTL(input)
+		if err == nil {
+			t.Fatal("verify invalid TTL should return error")
+		}
+		var fieldErr *field.Error
+		if !errors.As(err, &fieldErr) {
+			t.Fatal(err)
+		}
+		if fieldErr.Type != field.ErrorTypeInvalid {
+			t.Fatal(err)
+		}
 	}
 }
 
 func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 	tt := []struct {
-		name  string
-		input v1.Endpoint
+		name      string
+		wantError field.ErrorType
+		input     v1.Endpoint
 	}{
 		{
-			name: "Invalid DNS Name",
+			name:      "Invalid DNS Name",
+			wantError: field.ErrorTypeInvalid,
 			input: v1.Endpoint{
 				DNSName:    "",
 				Targets:    []string{"10.10.1.1"},
@@ -146,7 +145,8 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			},
 		},
 		{
-			name: "Invalid target",
+			name:      "Invalid target",
+			wantError: field.ErrorTypeInvalid,
 			input: v1.Endpoint{
 				DNSName:    "example.com",
 				Targets:    []string{"1111.1.2.3"},
@@ -155,7 +155,8 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			},
 		},
 		{
-			name: "Invalid record type",
+			name:      "Not supported record type",
+			wantError: field.ErrorTypeNotSupported,
 			input: v1.Endpoint{
 				DNSName:    "example.com",
 				Targets:    []string{"10.1.2.3"},
@@ -164,7 +165,8 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			},
 		},
 		{
-			name: "Invalid record TTL",
+			name:      "Invalid record TTL",
+			wantError: field.ErrorTypeInvalid,
 			input: v1.Endpoint{
 				DNSName:    "example.co.uk",
 				Targets:    []string{"123.10.2.3"},
@@ -173,7 +175,8 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			},
 		},
 		{
-			name: "Duplicated target",
+			name:      "Duplicated target",
+			wantError: field.ErrorTypeDuplicate,
 			input: v1.Endpoint{
 				DNSName:    "example.ie",
 				Targets:    []string{"142.10.12.3", "10.23.2.3", "142.10.12.3"},
@@ -182,7 +185,6 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			},
 		},
 	}
-
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			err := verifyEndpoint(&tc.input)
@@ -193,7 +195,9 @@ func TestVerifyEndpoint_ErrorsOnInvalidField(t *testing.T) {
 			if !errors.As(err, &fieldErr) {
 				t.Fatal(err)
 			}
-
+			if tc.wantError != fieldErr.Type {
+				t.Fatalf("want %v, got %v", tc.wantError, fieldErr.Type)
+			}
 		})
 	}
 }
