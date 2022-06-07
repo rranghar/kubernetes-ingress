@@ -11,34 +11,40 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation"
 )
 
-// isFullyQualifiedDomainName checks if the domain name is fully qualified.
-// It requires a minimum of 2 segments and accepts a trailing . as valid.
-func isFullyQualifiedDomainName(name string) error {
-	if len(name) == 0 {
-		return fmt.Errorf("%w: name not provided", ErrTypeInvalid)
+// ValidateDNSEnpoint validates if all DNSEndpoint fields are valid.
+func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
+	if err := validateDNSEndpointSpec(&dnsendpoint.Spec); err != nil {
+		return err
 	}
-	if strings.HasSuffix(name, ".") {
-		name = name[:len(name)-1]
+	return nil
+}
+
+// validateDNSEndpointSpec checks if endpoints are provided.
+func validateDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
+	if len(es.Endpoints) == 0 {
+		return fmt.Errorf("%w: no endpoints supplied, expected a list of endpoints", ErrTypeRequired)
 	}
-	if issues := validation.IsDNS1123Subdomain(name); len(issues) > 0 {
-		return fmt.Errorf("%w: name %s is not valid subdomain, %s", ErrTypeInvalid, name, strings.Join(issues, ", "))
-	}
-	if len(strings.Split(name, ".")) < 2 {
-		return fmt.Errorf("%w: name %s should be a domain with at least two segments separated by dots", ErrTypeInvalid, name)
-	}
-	for _, label := range strings.Split(name, ".") {
-		if issues := validation.IsDNS1123Label(label); len(issues) > 0 {
-			return fmt.Errorf("%w: label %s should conform to the definition of label in DNS (RFC1123), %s", ErrTypeInvalid, label, strings.Join(issues, ", "))
+	for _, endpoint := range es.Endpoints {
+		if err := validateEndpoint(endpoint); err != nil {
+			return err
 		}
 	}
 	return nil
 }
 
-// validateDNSRecordType checks if provided record is a valid DNS record type.
-// Valid records match the list of records implemented by the external-dns project.
-func validateDNSRecordType(record string) error {
-	if !slices.Contains(validRecords, record) {
-		return fmt.Errorf("%w: record %s, %s", ErrTypeNotSupported, record, strings.Join(validRecords, ","))
+// validateEndpoint checks if all Endpoint fields are valid.
+func validateEndpoint(e *v1.Endpoint) error {
+	if err := validateDNSName(e.DNSName); err != nil {
+		return err
+	}
+	if err := validateTargets(e.Targets); err != nil {
+		return err
+	}
+	if err := validateDNSRecordType(e.RecordType); err != nil {
+		return err
+	}
+	if err := validateTTL(e.RecordTTL); err != nil {
+		return err
 	}
 	return nil
 }
@@ -75,6 +81,15 @@ func isUnique(targets v1.Targets) error {
 	return nil
 }
 
+// validateDNSRecordType checks if provided record is a valid DNS record type.
+// Valid records match the list of records implemented by the external-dns project.
+func validateDNSRecordType(record string) error {
+	if !slices.Contains(validRecords, record) {
+		return fmt.Errorf("%w: record %s, %s", ErrTypeNotSupported, record, strings.Join(validRecords, ","))
+	}
+	return nil
+}
+
 // validateTTL checks if TTL value is > 0.
 func validateTTL(ttl v1.TTL) error {
 	if ttl <= 0 {
@@ -83,40 +98,25 @@ func validateTTL(ttl v1.TTL) error {
 	return nil
 }
 
-// validateEndpoint checks if all Endpoint fields are valid.
-func validateEndpoint(e *v1.Endpoint) error {
-	if err := validateDNSName(e.DNSName); err != nil {
-		return err
+// isFullyQualifiedDomainName checks if the domain name is fully qualified.
+// It requires a minimum of 2 segments and accepts a trailing . as valid.
+func isFullyQualifiedDomainName(name string) error {
+	if len(name) == 0 {
+		return fmt.Errorf("%w: name not provided", ErrTypeInvalid)
 	}
-	if err := validateTargets(e.Targets); err != nil {
-		return err
+	if strings.HasSuffix(name, ".") {
+		name = name[:len(name)-1]
 	}
-	if err := validateDNSRecordType(e.RecordType); err != nil {
-		return err
+	if issues := validation.IsDNS1123Subdomain(name); len(issues) > 0 {
+		return fmt.Errorf("%w: name %s is not valid subdomain, %s", ErrTypeInvalid, name, strings.Join(issues, ", "))
 	}
-	if err := validateTTL(e.RecordTTL); err != nil {
-		return err
+	if len(strings.Split(name, ".")) < 2 {
+		return fmt.Errorf("%w: name %s should be a domain with at least two segments separated by dots", ErrTypeInvalid, name)
 	}
-	return nil
-}
-
-// validateDNSEndpointSpec checks if endpoints are provided.
-func validateDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
-	if len(es.Endpoints) == 0 {
-		return fmt.Errorf("%w: no endpoints supplied, expected a list of endpoints", ErrTypeRequired)
-	}
-	for _, endpoint := range es.Endpoints {
-		if err := validateEndpoint(endpoint); err != nil {
-			return err
+	for _, label := range strings.Split(name, ".") {
+		if issues := validation.IsDNS1123Label(label); len(issues) > 0 {
+			return fmt.Errorf("%w: label %s should conform to the definition of label in DNS (RFC1123), %s", ErrTypeInvalid, label, strings.Join(issues, ", "))
 		}
-	}
-	return nil
-}
-
-// ValidateDNSEnpoint validates if all DNSEndpoint fields are valid.
-func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
-	if err := validateDNSEndpointSpec(&dnsendpoint.Spec); err != nil {
-		return err
 	}
 	return nil
 }

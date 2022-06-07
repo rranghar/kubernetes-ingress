@@ -169,6 +169,79 @@ func TestValidateDNSEndpoint_ReturnsErrorOn(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "empty dns name",
+			want: validation.ErrTypeInvalid,
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{
+						{
+							DNSName:    "",
+							Targets:    v1.Targets{"acme.com"},
+							RecordType: "A",
+							RecordTTL:  1800,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "bogus target name",
+			want: validation.ErrTypeInvalid,
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{
+						{
+							DNSName:    "example.com",
+							Targets:    v1.Targets{"acme."},
+							RecordType: "A",
+							RecordTTL:  1800,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "empty target name",
+			want: validation.ErrTypeInvalid,
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{
+						{
+							DNSName:    "example.com",
+							Targets:    v1.Targets{""},
+							RecordType: "A",
+							RecordTTL:  1800,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "bogus target name",
+			want: validation.ErrTypeInvalid,
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{
+						{
+							DNSName:    "example.com",
+							Targets:    v1.Targets{"&$$.*&^"},
+							RecordType: "A",
+							RecordTTL:  1800,
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "empty slice of endpoints",
+			want: validation.ErrTypeRequired,
+			endpoint: v1.DNSEndpoint{
+				Spec: v1.DNSEndpointSpec{
+					Endpoints: []*v1.Endpoint{},
+				},
+			},
+		},
 	}
 
 	for _, tc := range tt {
