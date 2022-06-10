@@ -1,125 +1,112 @@
 package validation
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
+	"golang.org/x/exp/slices"
+
 	v1 "github.com/nginxinc/kubernetes-ingress/pkg/apis/externaldns/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
-	"k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// verifyDNSRecordType checks if provided record is a valid DNS record type.
-// Valid records match the list of records implemented by the external-dns project.
-func verifyDNSRecordType(record string) error {
-	validRecords := []string{"A", "CNAME", "TXT", "SRV", "NS", "PTR"}
-	records := make(map[string]bool, len(validRecords))
-	for _, r := range validRecords {
-		records[r] = true
+// isFullyQualifiedDomainName checks if the domain name is fully qualified.
+// It requires a minimum of 2 segments and accepts a trailing . as valid.
+func isFullyQualifiedDomainName(name string) error {
+	if len(name) == 0 {
+		return fmt.Errorf("%w: name not provided", ErrTypeInvalid)
 	}
-	if _, ok := records[record]; !ok {
-		return &field.Error{
-			Type:     field.ErrorTypeNotSupported,
-			Field:    "RecordType",
-			BadValue: record,
-			Detail:   fmt.Sprintf("supported values: %s", strings.Join(validRecords, ", ")),
+	if strings.HasSuffix(name, ".") {
+		name = name[:len(name)-1]
+	}
+	if issues := validation.IsDNS1123Subdomain(name); len(issues) > 0 {
+		return fmt.Errorf("%w: name %s is not valid subdomain, %s", ErrTypeInvalid, name, strings.Join(issues, ", "))
+	}
+	if len(strings.Split(name, ".")) < 2 {
+		return fmt.Errorf("%w: name %s should be a domain with at least two segments separated by dots", ErrTypeInvalid, name)
+	}
+	for _, label := range strings.Split(name, ".") {
+		if issues := validation.IsDNS1123Label(label); len(issues) > 0 {
+			return fmt.Errorf("%w: label %s should conform to the definition of label in DNS (RFC1123), %s", ErrTypeInvalid, label, strings.Join(issues, ", "))
 		}
 	}
 	return nil
 }
 
-// verifyDNSName checks if provided string represents a valid DNS name.
-func verifyDNSName(s string) error {
-	result := validation.IsDNS1123Subdomain(s)
-	if len(result) == 0 {
-		return nil
+// validateDNSRecordType checks if provided record is a valid DNS record type.
+// Valid records match the list of records implemented by the external-dns project.
+func validateDNSRecordType(record string) error {
+	if !slices.Contains(validRecords, record) {
+		return fmt.Errorf("%w: record %s, %s", ErrTypeNotSupported, record, strings.Join(validRecords, ","))
 	}
-	return &field.Error{
-		Type:     field.ErrorTypeInvalid,
-		Field:    "DNSName",
-		BadValue: s,
-		Detail:   strings.Join(result, ", "),
-	}
+	return nil
 }
 
-// vaerifyTargets checks if targets represent valid IP adresses.
+// validateDNSName checks if provided string represents a valid DNS name.
+func validateDNSName(name string) error {
+	if issues := validation.IsDNS1123Subdomain(name); len(issues) > 0 {
+		return fmt.Errorf("%w: name %s, %s", ErrTypeInvalid, name, strings.Join(issues, ", "))
+	}
+	return nil
+}
+
+// validateTargets checks if targets represent valid FQDN entries.
 // It returns an error if any of the provided targets is not an IP address.
-func verifyTargets(targets v1.Targets) error {
+func validateTargets(targets v1.Targets) error {
 	for _, target := range targets {
-		result := validation.IsValidIP(target)
-		if len(result) == 0 {
-			continue
-		}
-		return &field.Error{
-			Type:     field.ErrorTypeInvalid,
-			Field:    "Targets",
-			BadValue: target,
-			Detail:   result[0],
+		if err := isFullyQualifiedDomainName(target); err != nil {
+			return fmt.Errorf("%w: target %q is invalid, it should be a valid IP address or hostname", ErrTypeInvalid, target)
 		}
 	}
 	return isUnique(targets)
 }
 
-// isUnique checks if targets (IP adresses) are not duplicated.
+// isUnique checks if targets are not duplicated.
 // It returns error if targets has a duplicated entry.
 func isUnique(targets v1.Targets) error {
 	occured := make(map[string]bool)
-	for i := 0; i < len(targets); i++ {
-		if occured[targets[i]] {
-			return &field.Error{
-				Type:     field.ErrorTypeDuplicate,
-				Field:    "Targets",
-				BadValue: targets[i],
-				Detail:   "expected unique targets",
-			}
+	for _, target := range targets {
+		if occured[target] {
+			return fmt.Errorf("%w: target %s, expected unique targets", ErrTypeDuplicated, target)
 		}
-		occured[targets[i]] = true
+		occured[target] = true
 	}
 	return nil
 }
 
-// verifyTTL checks if TTL value is > 0.
-func verifyTTL(ttl v1.TTL) error {
+// validateTTL checks if TTL value is > 0.
+func validateTTL(ttl v1.TTL) error {
 	if ttl <= 0 {
-		return &field.Error{
-			Type:     field.ErrorTypeInvalid,
-			Field:    "TTL",
-			BadValue: ttl,
-			Detail:   "ttl value should be > 0",
-		}
+		return fmt.Errorf("%w: ttl %d, ttl value should be > 0", ErrTypeNotInRange, ttl)
 	}
 	return nil
 }
 
-// verifyEndpoint checks if all Endpoint fields are valid.
-func verifyEndpoint(e *v1.Endpoint) error {
-	if err := verifyDNSName(e.DNSName); err != nil {
+// validateEndpoint checks if all Endpoint fields are valid.
+func validateEndpoint(e *v1.Endpoint) error {
+	if err := validateDNSName(e.DNSName); err != nil {
 		return err
 	}
-	if err := verifyTargets(e.Targets); err != nil {
+	if err := validateTargets(e.Targets); err != nil {
 		return err
 	}
-	if err := verifyDNSRecordType(e.RecordType); err != nil {
+	if err := validateDNSRecordType(e.RecordType); err != nil {
 		return err
 	}
-	if err := verifyTTL(e.RecordTTL); err != nil {
+	if err := validateTTL(e.RecordTTL); err != nil {
 		return err
 	}
 	return nil
 }
 
-// verifyDNSEndpointSpec checks if endpoints are provided.
-func verifyDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
+// validateDNSEndpointSpec checks if endpoints are provided.
+func validateDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
 	if len(es.Endpoints) == 0 {
-		return &field.Error{
-			Type:     field.ErrorTypeRequired,
-			Field:    "Endpoints",
-			BadValue: es,
-			Detail:   "a list of endpoints",
-		}
+		return fmt.Errorf("%w: no endpoints supplied, expected a list of endpoints", ErrTypeRequired)
 	}
 	for _, endpoint := range es.Endpoints {
-		if err := verifyEndpoint(endpoint); err != nil {
+		if err := validateEndpoint(endpoint); err != nil {
 			return err
 		}
 	}
@@ -128,8 +115,23 @@ func verifyDNSEndpointSpec(es *v1.DNSEndpointSpec) error {
 
 // ValidateDNSEnpoint validates if all DNSEndpoint fields are valid.
 func ValidateDNSEndpoint(dnsendpoint *v1.DNSEndpoint) error {
-	if err := verifyDNSEndpointSpec(&dnsendpoint.Spec); err != nil {
-		return fmt.Errorf("error validating DNSEndpoint: %w", err)
+	if err := validateDNSEndpointSpec(&dnsendpoint.Spec); err != nil {
+		return err
 	}
 	return nil
 }
+
+var (
+	// validRecords represents allowed DNS record names
+	//
+	// NGINX ingress controller at the moment supports
+	// a subset of DNS record types listed in the external-dns project.
+	validRecords = []string{"A", "CNAME"}
+
+	// validation error types based on k8s validators
+	ErrTypeNotSupported = errors.New("type not supported")
+	ErrTypeInvalid      = errors.New("type invalid")
+	ErrTypeDuplicated   = errors.New("type duplicated")
+	ErrTypeRequired     = errors.New("type required")
+	ErrTypeNotInRange   = errors.New("type not in range")
+)
