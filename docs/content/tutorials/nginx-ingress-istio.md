@@ -5,7 +5,7 @@ description: |
 weight: 1800
 doctypes: ["concept"]
 toc: true
-docs: "DOCS-600"
+docs: "DOCS-889"
 ---
 
 NGINX Ingress Controller can now be used as the ingress controller for applications that are running inside an Istio service mesh. This allows to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds. 
@@ -39,13 +39,13 @@ In 1.11 release, NGINX Ingress controller will only send one host header, depend
 
 Here is a standard deployment of NGINX Ingress controller without any service mesh deployed:    
 
-{{< figure src="./nginx_plain.png" alt="NGINX plain." >}}
+{{< img src="./img/nginx_plain.png" alt="NGINX stand alone." >}}
 
 
 When deploying NGINX Ingress controller with Istio, you must deploy the envoy sidecar proxy into the NGINX Ingress controller pod.   
 The image below is what NGINX Ingress and Istio deployment looks like:    
 
-{{< figure src="/docs/static/img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}    
+{{< img src="./img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}    
 
 
 By default for NGINX Ingress Controller, we populate the upstream server addresses with the endpoint IPs of the pods. NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the .conf with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs.    
@@ -141,6 +141,9 @@ nginx-ingress          Active   27h   istio-injection=enabled
 
 After we have setup and configured Istio, we can then deploy NGINX Plus Ingress as well as our applications that will be part of the service mesh. Istio will now inject sidecar proxies based upon how we have configured Istio (namespace configuration).     
 Now, our deployment will look like the following (with Envoy sidecar proxies).
+
+
+{{< img src="./img/nginx_istio_small.png" alt="NGINX Ingress pod with envoy sidecar." >}}
 
 ![nginx-ingress](../../../docs/static/img/nic_istio_small.png)
 
@@ -253,9 +256,9 @@ Notice the abscence of `proxy_set_header $host`. This is because we are using `a
 
 Now we can test our NGINX Ingress with Istio setup with a simple curl request to our application.
 
-
-curl -kI https://cafe.example.com/coffee
 ```
+curl -kI https://cafe.example.com/coffee     
+
 HTTP/1.1 200 OK
 Server: nginx/1.19.5
 Date: Thu, 25 Mar 2021 18:47:21 GMT
