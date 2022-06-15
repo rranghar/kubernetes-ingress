@@ -8,7 +8,7 @@ toc: true
 docs: "DOCS-889"
 ---
 
-NGINX Ingress Controller can now be used as the ingress controller for applications that are running inside an Istio service mesh. This allows to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds. 
+You can use NGINX Ingress Controller fpr applications that are running inside an Istio service mesh. This allows to continue using the advanced capabilities that NGINX Ingress Controleler in a istio service mesh environments without resorting to any workarounds. 
 
 
 Prior to 1.11 release, a configuration below would send two host headers to the backend; 
@@ -48,7 +48,7 @@ The image below is what NGINX Ingress and Istio deployment looks like:
 {{< img src="./img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}    
 
 
-By default for NGINX Ingress Controller, we populate the upstream server addresses with the endpoint IPs of the pods. NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the .conf with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs.    
+By default for NGINX Ingress Controller, we populate the upstream server addresses with the endpoint IPs of the pods. NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the .conf with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs of the pods.    
 
 To enable NGINX Ingress to route to the `Service IP`, we are going to use a new feature released in 1.11; [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream).   
 
@@ -70,7 +70,7 @@ Now NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. I
 
 ## Setting up NGINX Plus Ingress controller for Istio.
 
-When deploying NGINX Plus KIC with Istio, you will need to modify your Depoloyment file to include the specific items needed to work with Istio. Those four specific lines are:
+When deploying NGINX Plus Ingress Controller with Istio, you will need to modify your Depoloyment file to include the specific items needed to work with Istio. Those four specific lines are:
 
 ```yaml
 traffic.sidecar.istio.io/includeInboundPorts: ""
@@ -78,9 +78,13 @@ traffic.sidecar.istio.io/excludeInboundPorts: "80,443"
 traffic.sidecar.istio.io/excludeOutboundIPRanges: "substitute_for_correct_subnet_range"
 sidecar.istio.io/inject: 'true'
 ```
+
 Additional information on the above annotations can be found on Istios website.
+[Istio Service Mesh Annotations](https://istio.io/latest/docs/reference/config/annotations/)
+
 
 Your updated nginx-plus-ingress.yaml file will look something like this with the added annotations:
+
 ```yaml
 apiVersion: apps/v1    
 kind: Deployment    
@@ -104,7 +108,9 @@ spec:
 ```
 
 ## Install Istio
- 
+
+Link to Istio install guide:    
+[Installing istio](https://istio.io/latest/docs/setup/install/)    
 
 You can then install Istio by your preferred method (helm, operator etc.). Deploy Istio into your cluster. In this case, I ran the following command to install Istio into my cluster:
 
@@ -116,7 +122,7 @@ We need to make sure that Istio injects sidecar proxies into our namespace for o
 ```
 kubectl label ns <namespace_specified> istio-injection=enabled
 ```
-Since I installed NGINX ingress and my application into the same namespace, I specified nginx-ingress with the istio-injection=enabled label on that namespace.
+Since we installed NGINX ingress and my application into the same namespace as our test application, I specified nginx-ingress with the istio-injection=enabled label on that namespace.    
 
 ```
 kubectl label namespace nginx-ingress istio-injection=enabled
@@ -148,7 +154,7 @@ Now, our deployment will look like the following (with Envoy sidecar proxies).
 ![nginx-ingress](../../../docs/static/img/nic_istio_small.png)
 
 
-We can now see that after configuring Istio with the necessary pieces needed to install a sidecar proxy into the same pod as NGINX ingress, after we deploy NGINX ingress, there are two containers in the same pod for Nginx Ingress:  one is NGINX-ingress, the other is the istio sidecar proxy.
+We can now see that after configuring Istio with the necessary pieces needed to install a sidecar proxy into the same pod as NGINX Ingress Controller. There are now, two containers in the same pod for Nginx Ingress controller:  one is NGINX Ingress controller container, the other is the istio sidecar proxy container.
 
 ```
 kubectl get pods -A
@@ -209,7 +215,7 @@ With our new Host header control in v1.11, when VirtualServer is configured with
 Here is the output of `nginx -T` to show our upstreams and proxy_set_header values 
 The server in the upstream is the IP address of the service for that given application)
 
-```
+```bash
 upstream vs_nginx-ingress_cafe_tea {
     zone vs_nginx-ingress_cafe_tea 256k;
     random two least_conn;
@@ -252,11 +258,12 @@ server {
     }   
 }
 ```
+
 Notice the abscence of `proxy_set_header $host`. This is because we are using `action-proxy-requestHeaders` option to specify what headers we want to pass to Istio sidecar. This is required by Istio.
 
 Now we can test our NGINX Ingress with Istio setup with a simple curl request to our application.
 
-```
+```bash
 curl -kI https://cafe.example.com/coffee     
 
 HTTP/1.1 200 OK
@@ -273,12 +280,11 @@ x-envoy-decorator-operation: coffee-svc.nginx-ingress.svc.cluster.local:80/*
 
 We can see in the above output, our curl request is sent and received by NGINX Ingress. We can see that the envoy sidecar proxy then sends the request to the service IP to the application (coffee), with the full request being complete and correct. Now we have a full working NGINX+ Ingress with Istio as the sidecar proxies are deployed.
 
- 
 
 For disabling/removing sidecar proxies and autoinjection:
  
 
 To remove label from the namespace:
-```
+```bash
 kubectl lable ns default istio-injection-
 ```
