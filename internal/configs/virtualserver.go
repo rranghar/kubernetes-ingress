@@ -341,62 +341,14 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	limitReqZones = append(limitReqZones, policiesCfg.LimitReqZones...)
 
 	// generate upstreams for VirtualServer
-	for _, u := range vsEx.VirtualServer.Spec.Upstreams {
-
-		if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
-			vsc.addWarningf(vsEx.VirtualServer, "gRPC cannot be configured for upstream %s. gRPC requires enabled HTTP/2 and TLS termination.", u.Name)
-		}
-
-		upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
-		upstreamNamespace := vsEx.VirtualServer.Namespace
-		endpoints := vsc.generateEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, u, vsEx)
-
-		// isExternalNameSvc is always false for OSS
-		_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-		ups := vsc.generateUpstream(vsEx.VirtualServer, upstreamName, u, isExternalNameSvc, endpoints)
-		upstreams = append(upstreams, ups)
-
-		u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
-		crUpstreams[upstreamName] = u
-
-		if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
-			healthChecks = append(healthChecks, *hc)
-			if u.HealthCheck.StatusMatch != "" {
-				statusMatches = append(
-					statusMatches,
-					generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch),
-				)
-			}
-		}
+	for i := range vsEx.VirtualServer.Spec.Upstreams {
+		crUpstreams, upstreams, healthChecks, statusMatches = vsc.generateUpstreamsForVirtualServer(sslConfig, &vsEx.VirtualServer.Spec.Upstreams[i], vsEx, vsEx.VirtualServer, vsEx.VirtualServer.Namespace, virtualServerUpstreamNamer, crUpstreams, upstreams, healthChecks, statusMatches)
 	}
 	// generate upstreams for each VirtualServerRoute
 	for _, vsr := range vsEx.VirtualServerRoutes {
 		upstreamNamer := newUpstreamNamerForVirtualServerRoute(vsEx.VirtualServer, vsr)
-		for _, u := range vsr.Spec.Upstreams {
-			if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
-				vsc.addWarningf(vsr, "gRPC cannot be configured for upstream %s. gRPC requires enabled HTTP/2 and TLS termination", u.Name)
-			}
-
-			upstreamName := upstreamNamer.GetNameForUpstream(u.Name)
-			upstreamNamespace := vsr.Namespace
-			endpoints := vsc.generateEndpointsForUpstream(vsr, upstreamNamespace, u, vsEx)
-
-			// isExternalNameSvc is always false for OSS
-			_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
-			ups := vsc.generateUpstream(vsr, upstreamName, u, isExternalNameSvc, endpoints)
-			upstreams = append(upstreams, ups)
-			u.TLS.Enable = isTLSEnabled(u, vsc.spiffeCerts)
-			crUpstreams[upstreamName] = u
-
-			if hc := generateHealthCheck(u, upstreamName, vsc.cfgParams); hc != nil {
-				healthChecks = append(healthChecks, *hc)
-				if u.HealthCheck.StatusMatch != "" {
-					statusMatches = append(
-						statusMatches,
-						generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch),
-					)
-				}
-			}
+		for i := range vsr.Spec.Upstreams {
+			crUpstreams, upstreams, healthChecks, statusMatches = vsc.generateUpstreamsForVirtualServer(sslConfig, &vsr.Spec.Upstreams[i], vsEx, vsr, vsr.Namespace, upstreamNamer, crUpstreams, upstreams, healthChecks, statusMatches)
 		}
 	}
 
@@ -465,57 +417,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 
 		dosRouteCfg := generateDosCfg(dosResources[r.Path])
 
-		if len(r.Matches) > 0 {
-			cfg := generateMatchesConfig(
-				r,
-				virtualServerUpstreamNamer,
-				crUpstreams,
-				variableNamer,
-				matchesRoutes,
-				len(splitClients),
-				vsc.cfgParams,
-				errorPages,
-				vsLocSnippets,
-				vsc.enableSnippets,
-				len(returnLocations),
-				isVSR,
-				"", "",
-				vsc.warnings,
-			)
-			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
-			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
-
-			maps = append(maps, cfg.Maps...)
-			locations = append(locations, cfg.Locations...)
-			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
-			returnLocations = append(returnLocations, cfg.ReturnLocations...)
-			splitClients = append(splitClients, cfg.SplitClients...)
-			matchesRoutes++
-		} else if len(r.Splits) > 0 {
-			cfg := generateDefaultSplitsConfig(r, virtualServerUpstreamNamer, crUpstreams, variableNamer, len(splitClients),
-				vsc.cfgParams, errorPages, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings)
-			addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
-			addDosConfigToLocations(dosRouteCfg, cfg.Locations)
-			splitClients = append(splitClients, cfg.SplitClients...)
-			locations = append(locations, cfg.Locations...)
-			internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
-			returnLocations = append(returnLocations, cfg.ReturnLocations...)
-		} else {
-			upstreamName := virtualServerUpstreamNamer.GetNameForUpstreamFromAction(r.Action)
-			upstream := crUpstreams[upstreamName]
-
-			proxySSLName := generateProxySSLName(upstream.Service, vsEx.VirtualServer.Namespace)
-
-			loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
-				proxySSLName, r.Path, vsLocSnippets, vsc.enableSnippets, len(returnLocations), isVSR, "", "", vsc.warnings)
-			addPoliciesCfgToLocation(routePoliciesCfg, &loc)
-			loc.Dos = dosRouteCfg
-
-			locations = append(locations, loc)
-			if returnLoc != nil {
-				returnLocations = append(returnLocations, *returnLoc)
-			}
-		}
+		maps, locations, internalRedirectLocations, returnLocations, splitClients, matchesRoutes = vsc.handleMatchesAndSplits(
+			r, virtualServerUpstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients), errorPages, vsLocSnippets,
+			len(returnLocations), isVSR, "", vsEx.VirtualServer.Namespace, routePoliciesCfg, dosRouteCfg, maps, locations, internalRedirectLocations,
+			returnLocations, splitClients, matchesRoutes,
+		)
 	}
 
 	// generate config for subroutes of each VirtualServerRoute
@@ -575,58 +481,11 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 
 			dosRouteCfg := generateDosCfg(dosResources[r.Path])
 
-			if len(r.Matches) > 0 {
-				cfg := generateMatchesConfig(
-					r,
-					upstreamNamer,
-					crUpstreams,
-					variableNamer,
-					matchesRoutes,
-					len(splitClients),
-					vsc.cfgParams,
-					errorPages,
-					locSnippets,
-					vsc.enableSnippets,
-					len(returnLocations),
-					isVSR,
-					vsr.Name,
-					vsr.Namespace,
-					vsc.warnings,
-				)
-				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
-				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
-
-				maps = append(maps, cfg.Maps...)
-				locations = append(locations, cfg.Locations...)
-				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
-				returnLocations = append(returnLocations, cfg.ReturnLocations...)
-				splitClients = append(splitClients, cfg.SplitClients...)
-				matchesRoutes++
-			} else if len(r.Splits) > 0 {
-				cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, len(splitClients), vsc.cfgParams,
-					errorPages, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings)
-				addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
-				addDosConfigToLocations(dosRouteCfg, cfg.Locations)
-
-				splitClients = append(splitClients, cfg.SplitClients...)
-				locations = append(locations, cfg.Locations...)
-				internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
-				returnLocations = append(returnLocations, cfg.ReturnLocations...)
-			} else {
-				upstreamName := upstreamNamer.GetNameForUpstreamFromAction(r.Action)
-				upstream := crUpstreams[upstreamName]
-				proxySSLName := generateProxySSLName(upstream.Service, vsr.Namespace)
-
-				loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
-					proxySSLName, r.Path, locSnippets, vsc.enableSnippets, len(returnLocations), isVSR, vsr.Name, vsr.Namespace, vsc.warnings)
-				addPoliciesCfgToLocation(routePoliciesCfg, &loc)
-				loc.Dos = dosRouteCfg
-
-				locations = append(locations, loc)
-				if returnLoc != nil {
-					returnLocations = append(returnLocations, *returnLoc)
-				}
-			}
+			maps, locations, internalRedirectLocations, returnLocations, splitClients, matchesRoutes = vsc.handleMatchesAndSplits(
+				r, upstreamNamer, crUpstreams, variableNamer, matchesRoutes, len(splitClients), errorPages, locSnippets,
+				len(returnLocations), isVSR, vsr.Name, vsr.Namespace, routePoliciesCfg, dosRouteCfg, maps, locations, internalRedirectLocations,
+				returnLocations, splitClients, matchesRoutes,
+			)
 		}
 	}
 
@@ -679,6 +538,96 @@ func (vsc *virtualServerConfigurator) GenerateVirtualServerConfig(
 	}
 
 	return vsCfg, vsc.warnings
+}
+
+func (vsc *virtualServerConfigurator) generateUpstreamsForVirtualServer(
+	sslConfig *version2.SSL,
+	u *conf_v1.Upstream,
+	vsEx *VirtualServerEx,
+	owner runtime.Object,
+	upstreamNamespace string,
+	virtualServerUpstreamNamer *upstreamNamer,
+	crUpstreams map[string]conf_v1.Upstream,
+	upstreams []version2.Upstream,
+	healthChecks []version2.HealthCheck,
+	statusMatches []version2.StatusMatch) (
+	map[string]conf_v1.Upstream, []version2.Upstream, []version2.HealthCheck, []version2.StatusMatch,
+) {
+	if (sslConfig == nil || !vsc.cfgParams.HTTP2) && isGRPC(u.Type) {
+		vsc.addWarningf(vsEx.VirtualServer, "gRPC cannot be configured for upstream %s. gRPC requires enabled HTTP/2 and TLS termination.", u.Name)
+	}
+
+	upstreamName := virtualServerUpstreamNamer.GetNameForUpstream(u.Name)
+	endpoints := vsc.generateEndpointsForUpstream(vsEx.VirtualServer, upstreamNamespace, *u, vsEx)
+
+	// isExternalNameSvc is always false for OSS
+	_, isExternalNameSvc := vsEx.ExternalNameSvcs[GenerateExternalNameSvcKey(upstreamNamespace, u.Service)]
+	ups := vsc.generateUpstream(owner, upstreamName, *u, isExternalNameSvc, endpoints)
+
+	u.TLS.Enable = isTLSEnabled(*u, vsc.spiffeCerts)
+
+	if hc := generateHealthCheck(*u, upstreamName, vsc.cfgParams); hc != nil {
+		healthChecks = append(healthChecks, *hc)
+		if u.HealthCheck.StatusMatch != "" {
+			sm := generateUpstreamStatusMatch(upstreamName, u.HealthCheck.StatusMatch)
+			statusMatches = append(statusMatches, sm)
+		}
+	}
+
+	crUpstreams[upstreamName] = *u
+	upstreams = append(upstreams, ups)
+	return crUpstreams, upstreams, healthChecks, statusMatches
+}
+
+func (vsc *virtualServerConfigurator) handleMatchesAndSplits(r conf_v1.Route, upstreamNamer *upstreamNamer, crUpstreams map[string]conf_v1.Upstream,
+	variableNamer *variableNamer, index int, scIndex int, errorPages errorPageDetails, locSnippets string, retLocIndex int, isVSR bool,
+	vsrName string, vsrNamespace string, routePoliciesCfg policiesCfg, dosRouteCfg *version2.Dos, maps []version2.Map, locations []version2.Location,
+	internalRedirectLocations []version2.InternalRedirectLocation, returnLocations []version2.ReturnLocation, splitClients []version2.SplitClient, matchesRoutes int,
+) ([]version2.Map, []version2.Location, []version2.InternalRedirectLocation, []version2.ReturnLocation, []version2.SplitClient, int) {
+	var vsrNs string
+	if isVSR {
+		vsrNs = vsrNamespace
+	}
+
+	if len(r.Matches) > 0 {
+		cfg := generateMatchesConfig(r, upstreamNamer, crUpstreams, variableNamer, index, scIndex, vsc.cfgParams, errorPages,
+			locSnippets, vsc.enableSnippets, retLocIndex, isVSR, vsrName, vsrNs, vsc.warnings)
+		addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+		addDosConfigToLocations(dosRouteCfg, cfg.Locations)
+
+		maps = append(maps, cfg.Maps...)
+		locations = append(locations, cfg.Locations...)
+		internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
+		returnLocations = append(returnLocations, cfg.ReturnLocations...)
+		splitClients = append(splitClients, cfg.SplitClients...)
+		matchesRoutes++
+	} else if len(r.Splits) > 0 {
+		cfg := generateDefaultSplitsConfig(r, upstreamNamer, crUpstreams, variableNamer, scIndex, vsc.cfgParams,
+			errorPages, r.Path, locSnippets, vsc.enableSnippets, retLocIndex, isVSR, vsrName, vsrNs, vsc.warnings)
+		addPoliciesCfgToLocations(routePoliciesCfg, cfg.Locations)
+		addDosConfigToLocations(dosRouteCfg, cfg.Locations)
+
+		splitClients = append(splitClients, cfg.SplitClients...)
+		locations = append(locations, cfg.Locations...)
+		internalRedirectLocations = append(internalRedirectLocations, cfg.InternalRedirectLocation)
+		returnLocations = append(returnLocations, cfg.ReturnLocations...)
+	} else {
+		upstreamName := upstreamNamer.GetNameForUpstreamFromAction(r.Action)
+		upstream := crUpstreams[upstreamName]
+		proxySSLName := generateProxySSLName(upstream.Service, vsrNamespace)
+
+		loc, returnLoc := generateLocation(r.Path, upstreamName, upstream, r.Action, vsc.cfgParams, errorPages, false,
+			proxySSLName, r.Path, locSnippets, vsc.enableSnippets, retLocIndex, isVSR, vsrName, vsrNs, vsc.warnings)
+		addPoliciesCfgToLocation(routePoliciesCfg, &loc)
+		loc.Dos = dosRouteCfg
+
+		locations = append(locations, loc)
+		if returnLoc != nil {
+			returnLocations = append(returnLocations, *returnLoc)
+		}
+	}
+
+	return maps, locations, internalRedirectLocations, returnLocations, splitClients, matchesRoutes
 }
 
 type policiesCfg struct {
