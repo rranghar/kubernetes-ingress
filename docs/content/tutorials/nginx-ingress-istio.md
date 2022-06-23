@@ -8,40 +8,16 @@ toc: true
 docs: "DOCS-889"
 ---
 
-With the release of NGINX Ingress controller 1.11, NGINX Ingress Controller can be used as the Ingress gateway for Istio Service Mesh. This tutorial covers how to implement a topology that places the power and wide capabilities of the NGINX Ingress Controller in front of Istio Service Mesh.
+This document is compatible with NGINX Ingress Controller 1.11 and later.   
+A new setting 'use-cluster-ip' was introduced that provides compatibility with Istio Service Mesh.   
+
+Without this setting NGINX Ingress Controller will send traffic direct to individual pods of a service that is configured as the upstream. While this behavior is very powerful in granting additional controls with loadbalancing, persistence, and advanced health check behavior to the applications executing in the upstream service pods, it is not compatible with Istio Service Mesh.   
+
+With the release of NGINX Ingress controller 1.11, NGINX Ingress Controller can be used as the Ingress gateway for Istio Service Mesh. This tutorial covers how to implement a topology that places the power and wide capabilities of the NGINX Ingress Controller in front of Istio Service Mesh.   
 
 Here is a standard deployment of NGINX Ingress controller without any service mesh deployed:    
 
 {{< img src="./img/nginx_plain.png" alt="NGINX stand alone." >}}
-
-
-When deploying NGINX Ingress controller with Istio, you must deploy the envoy sidecar proxy into the NGINX Ingress controller pod.   
-The image below is what NGINX Ingress and Istio deployment looks like:    
-
-{{< img src="./img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}    
-
-
- NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the `.conf` with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs of the pods which is required by Istio.    
-
-To enable NGINX Ingress to route to the `Service IP`, we are going to use a new feature released in 1.11; [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream).   
-
-Here is a simple example of what your `upstream` section will look like now in `virtualServer/virtualServerRoute`:
-
-```yaml
-upstreams:
-  - name: tea
-    service: tea-svc
-    port: 80
-    use-cluster-ip: true
-  - name: coffee
-    service: coffee-svc
-    port: 80
-    use-cluster-ip: true
-```
-
-Now NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. In the example above, the service/cluster IPs for `tea-svc` and `coffee-svc` will be added to the `upstream` configuration as the `server` addresses.
-
-
 
 ## Install Istio
 
@@ -85,6 +61,32 @@ nginx-ingress          Active   27h   istio-injection=enabled
 
 After we have setup and configured Istio, we can then deploy NGINX Plus Ingress as well as our applications that will be part of the service mesh. Istio will now inject sidecar proxies based upon how we have configured Istio (namespace configuration).     
 Now, our deployment will look like the following (with Envoy sidecar proxies).
+
+The image below is what NGINX Ingress and Istio deployment looks like:    
+
+{{< img src="./img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}    
+
+
+ NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the `.conf` with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs of the pods which is required by Istio.    
+
+To enable NGINX Ingress to route to the `Service IP`, we are going to use a new feature released in 1.11; [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream).   
+
+Here is a simple example of what your `upstream` section will look like now in `virtualServer/virtualServerRoute`:
+
+```yaml
+upstreams:
+  - name: tea
+    service: tea-svc
+    port: 80
+    use-cluster-ip: true
+  - name: coffee
+    service: coffee-svc
+    port: 80
+    use-cluster-ip: true
+```
+
+Now NGINX Ingress `upstreams` will be populated with the `Service/cluster IP`. In the example above, the service/cluster IPs for `tea-svc` and `coffee-svc` will be added to the `upstream` configuration as the `server` addresses.
+
 
 ## Setting up NGINX Plus Ingress controller deployment for Istio.
 
