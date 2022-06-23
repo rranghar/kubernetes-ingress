@@ -9,9 +9,9 @@ docs: "DOCS-889"
 ---
 
 This document is compatible with NGINX Ingress Controller 1.11 and later.   
-A new setting 'use-cluster-ip' was introduced that provides compatibility with Istio Service Mesh.   
+A new setting `use-cluster-ip` was introduced that provides compatibility with Istio Service Mesh.   
 
-Without this setting NGINX Ingress Controller will send traffic direct to individual pods of a service that is configured as the upstream. While this behavior is very powerful in granting additional controls with loadbalancing, persistence, and advanced health check behavior to the applications executing in the upstream service pods, it is not compatible with Istio Service Mesh.   
+Without this setting NGINX Ingress Controller will send traffic direct to individual pods of a service that is configured as the upstream.   While this behavior is very powerful in granting additional controls with loadbalancing, persistence, and advanced health check behavior to the applications executing in the upstream service pods, it is not compatible with Istio Service Mesh.   
 
 With the release of NGINX Ingress controller 1.11, NGINX Ingress Controller can be used as the Ingress gateway for Istio Service Mesh. This tutorial covers how to implement a topology that places the power and wide capabilities of the NGINX Ingress Controller in front of Istio Service Mesh.   
 
@@ -66,6 +66,7 @@ The image below is what NGINX Ingress and Istio deployment looks like:
 
 {{< img src="./img/nginx-envoy.png" alt="NGINX with envoy sidecar." >}}    
 
+## Install NGINX Ingress Controller  
 
  NGINX Ingress Controller 1.11 release now supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. Using this flag,  NGINX Ingress will generate the `.conf` with the `service/cluster IP` of the service in the `upstreams/servers` section, instead of pod endpoint IPs of the pods which is required by Istio.    
 
@@ -129,8 +130,6 @@ spec:
 
 
 {{< img src="./img/nginx_istio_small.png" alt="NGINX Ingress pod with envoy sidecar." >}}
-
-![nginx-ingress](../../../docs/static/img/nic_istio_small.png)
 
 
 We can now see that after configuring Istio with the necessary pieces needed to install a sidecar proxy into the same pod as NGINX Ingress Controller. There are now, two containers in the same pod for Nginx Ingress controller:  one is NGINX Ingress controller container, the other is the istio sidecar proxy container.
