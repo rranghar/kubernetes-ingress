@@ -8,11 +8,10 @@ toc: true
 docs: "DOCS-889"
 ---
 
-## This document is compatible with NGINX Ingress Controller 1.11 and later.    
+## Using NGINX Ingress Controller with Istio service mesh    
 
- NGINX Ingress Controller 1.11 release supports the ability to configure NGINX Ingress CRDs (virtualServer/virtualServerRoute)to use the `service/cluster IP`. To enable NGINX Ingress to route to the `service IP`, we are going to use [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream).   
- 
-The use of the `service IP` is required if you are going to use Istio service mesh with NGINX ingress controller.   
+NGINX Ingress Controller can now be used as the ingress controller for applications that are running inside an Istio service mesh. This allows to continue using the advanced capabilities that NGINX IC provides on Istio-based environments without resorting to any workarounds.
+This is accomplished using the special setting [use-cluster-ip](https://docs.nginx.com/nginx-ingress-controller/configuration/virtualserver-and-virtualserverroute-resources/#upstream) for the backend.
 
 
 Here is a standard deployment of NGINX Ingress controller without a sidecar proxy injected into the pod.    
