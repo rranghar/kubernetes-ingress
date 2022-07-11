@@ -16,7 +16,14 @@ This is accomplished using the special setting [use-cluster-ip](https://docs.ngi
 
 Here is a standard deployment of NGINX Ingress controller without a sidecar proxy injected into the pod.    
 
-{{< img src="./img/nginx_plain.png" alt="NGINX stand alone." >}}
+{{< img src="./img/nginx_plain.png" alt="NGINX stand alone." >}}   
+
+Notice that NGINX Ingress Controller is enumerating the pods of the backend service and balancing traffic directly to them, granting you full control of backend loadbalancer and stickyness behavior.   
+If your service pods supported TLS, then NIC could re-encrypt the traffic to them and provide end-to-end encryption.   
+
+But then if your services could do that, you might no be implementing a Service Mesh.   
+
+To begin, Istio needs to be installed into your cluster.   
 
 ## Install Istio
 
@@ -35,7 +42,7 @@ We need to make sure that Istio injects sidecar proxies into our namespace for o
 ```
 kubectl label ns <namespace_specified> istio-injection=enabled
 ```
-Since we installed NGINX ingress and my application into the same namespace as our test application, I specified nginx-ingress with the istio-injection=enabled label on that namespace.    
+Before proceeding, and before installing NGINX Ingress Controller you need to tell Istio that it will be injecting sidecars with the NGINX Ingress controller pods as they are deployed.   
 
 ```
 kubectl label namespace nginx-ingress istio-injection=enabled
