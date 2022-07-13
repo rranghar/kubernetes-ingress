@@ -47,7 +47,7 @@ All images include NGINX 1.23.0.
 | ---| ---| ---| --- | --- |
 |Alpine-based image | ``nginx:1.23.0-alpine``, which is based on ``alpine:3.16`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.3.0-alpine`` | arm/v7, arm64, amd64, ppc64le, s390x |
 |Debian-based image | ``nginx:1.23.0``, which is based on ``debian:bullseye-slim`` | NGINX OpenTracing module, OpenTracing library, OpenTracing tracers for Jaeger, Zipkin and Datadog | ``nginx/nginx-ingress:2.3.0`` | arm/v7, arm64, amd64, ppc64le, s390x |
-|Ubi-based image | ``redhat/ubi8`` |  | ``nginx/nginx-ingress:2.3.0-ubi`` | arm64, amd64, s390x |
+|Ubi-based image | ``nginxcontrib/nginx-ubi:1.23.0``, which is based on ``redhat/ubi9-minimal`` |  | ``nginx/nginx-ingress:2.3.0-ubi`` | arm64, amd64, ppc64le, s390x |
 {{% /table %}}
 
 ### Images with NGINX Plus
