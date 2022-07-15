@@ -64,7 +64,6 @@ spec:
         args:
           - -nginx-plus
           - -nginx-configmaps=$(POD_NAMESPACE)/nginx-config
-          - -default-server-tls-secret=$(POD_NAMESPACE)/default-server-secret
          #- -enable-cert-manager
          #- -enable-external-dns
          #- -enable-app-protect
