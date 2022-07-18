@@ -217,8 +217,6 @@ An OpenAPI-ready policy template is provided with the NGINX App Protect WAF pack
 
 It contains violations related to OpenAPI set to blocking (enforced).
 
-**Note**: NGINX App Protect WAF supports only one OpenAPI Specification file reference per policy. 
-
 ### Types of OpenAPI References
 
 There are different ways of referencing OpenAPI Specification files. The configuration is similar to [External References](#external-references).
