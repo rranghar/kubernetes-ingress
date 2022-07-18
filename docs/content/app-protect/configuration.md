@@ -1,14 +1,13 @@
 ---
 title: Configuration
 
-description: "This document describes how to configure the NGINX App Protect module"
+description: "This document describes how to configure the NGINX App Protect module."
 weight: 1900
 doctypes: [""]
 toc: true
 docs: "DOCS-578"
 ---
 
-This document describes how to configure the NGINX App Protect module
 > Check out the complete [NGINX Ingress Controller with App Protect example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
 
 ## Global Configuration
@@ -203,3 +202,268 @@ spec:
   softwareVersion: 15.1.0
   tag: Fruits
 ```
+
+## OpenAPI Specification in NGINX Ingress Controller
+
+The OpenAPI Specification defines the spec file format needed to describe RESTful APIs. The spec file can be written either in JSON or YAML. Using a spec file simplifies the work of implementing API protection. Refer to the OpenAPI Specification (formerly called Swagger) for details.
+
+The simplest way to create an API protection policy is using an OpenAPI Specification file to import the details of the APIs. If you use an OpenAPI Specification file, NGINX App Protect WAF will automatically create a policy for the following properties (depending on what's included in the spec file):
+* Methods
+* URLs
+* Parameters
+* JSON profiles 
+
+An OpenAPI-ready policy template is provided with the NGINX App Protect WAF packages and is located in: `/etc/app_protect/conf/NginxApiSecurityPolicy.json`
+
+It contains violations related to OpenAPI set to blocking (enforced).
+
+**Note**: NGINX App Protect WAF supports only one OpenAPI Specification file reference per policy. 
+
+### Types of OpenAPI References
+
+There are different ways of referencing OpenAPI Specification files. The configuration is similar to [External References](#external-references).
+
+**Note**: Any update of an OpenAPI Specification file referenced in the policy will not trigger a policy compilation. This action needs to be done actively by reloading the NGINX configuration.
+
+#### URL Reference
+
+URL reference is the method of referencing an external source by providing its full URL.
+
+Make sure to configure certificates prior to using the HTTPS protocol - see the [External References](#https-reference) for details.
+
+**Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
+
+##### Example Configuration
+
+In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.json` using the link ` :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml`. This will configure allowed data types for `query_int` and `query_str` parameters values.
+
+**Policy configuration:**
+
+~~~yaml
+---
+policy:
+  name: petstore_api_security_policy
+  description: NGINX App Protect WAF API Security Policy for the Petstore API
+  template:
+    name: POLICY_TEMPLATE_NGINX_BASE
+  open-api-files:
+  - link:  :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml
+  blocking-settings:
+    violations:
+    - block: true
+      description: Disallowed file upload content detected in body
+      name: VIOL_FILE_UPLOAD_IN_BODY
+    - block: true
+      description: Mandatory request body is missing
+      name: VIOL_MANDATORY_REQUEST_BODY
+    - block: true
+      description: Illegal parameter location
+      name: VIOL_PARAMETER_LOCATION
+    - block: true
+      description: Mandatory parameter is missing
+      name: VIOL_MANDATORY_PARAMETER
+    - block: true
+      description: JSON data does not comply with JSON schema
+      name: VIOL_JSON_SCHEMA
+    - block: true
+      description: Illegal parameter array value
+      name: VIOL_PARAMETER_ARRAY_VALUE
+    - block: true
+      description: Illegal Base64 value
+      name: VIOL_PARAMETER_VALUE_BASE64
+    - block: true
+      description: Disallowed file upload content detected
+      name: VIOL_FILE_UPLOAD
+    - block: true
+      description: Illegal request content type
+      name: VIOL_URL_CONTENT_TYPE
+    - block: true
+      description: Illegal static parameter value
+      name: VIOL_PARAMETER_STATIC_VALUE
+    - block: true
+      description: Illegal parameter value length
+      name: VIOL_PARAMETER_VALUE_LENGTH
+    - block: true
+      description: Illegal parameter data type
+      name: VIOL_PARAMETER_DATA_TYPE
+    - block: true
+      description: Illegal parameter numeric value
+      name: VIOL_PARAMETER_NUMERIC_VALUE
+    - block: true
+      description: Parameter value does not comply with regular expression
+      name: VIOL_PARAMETER_VALUE_REGEXP
+    - block: true
+      description: Illegal URL
+      name: VIOL_URL
+    - block: true
+      description: Illegal parameter
+      name: VIOL_PARAMETER
+    - block: true
+      description: Illegal empty parameter value
+      name: VIOL_PARAMETER_EMPTY_VALUE
+    - block: true
+      description: Illegal repeated parameter name
+      name: VIOL_PARAMETER_REPEATED
+
+~~~
+
+Content of the referenced file `myapi.yaml`:
+
+~~~yaml
+openapi: 3.0.1
+info:
+  title: 'Primitive data types'
+  description: 'Primitive data types.'
+  version: '2.5.0'
+servers:
+  - url: http://localhost
+paths:
+  /query:
+    get:
+      tags:
+        - query_int_str
+      description: query_int_str
+      operationId: query_int_str
+      parameters:
+        - name: query_int
+          in: query
+          required: false
+          allowEmptyValue: false
+          schema:
+            type: integer
+        - name: query_str
+          in: query
+          required: false
+          allowEmptyValue: true
+          schema:
+            type: string           
+      responses:
+        200:
+          description: OK
+        404:
+          description: NotFound
+~~~
+
+In this case the following request will trigger an `Illegal parameter data type` violation, as we expect to have an integer value in the `query_int` parameter:
+
+```
+http://localhost/query?query_int=abc
+```
+
+The request will be blocked.
+
+The link option is also available in the `openApiFileReference` property and synonymous with the one above in `open-api-files`
+
+**Note**: `openApiFileReference` is not an array.
+
+##### Example Configuration
+
+In this example, we reference the same OpenAPI Specification file as in the policy above using the `openApiFileReference` property.
+
+**Policy configuration:**
+
+~~~json
+{
+    "name": "openapifilereference-yaml",
+    "template": {
+        "name": "POLICY_TEMPLATE_NGINX_BASE"
+    },
+    "openApiFileReference": {
+        "link": "http://127.0.0.1:8088/ref.txt"
+    }
+}
+~~~
+
+Content of the file `ref.txt`:
+
+```json
+[
+    {
+        "link": "http://127.0.0.1:8088/myapi.yaml"
+    }
+]
+```
+
+#### File Reference
+
+File reference refers to accessing local resources on the same machine. See the [External References](#file-reference) for details.
+
+##### Example Configuration
+     
+In this example, we would like to add an OpenAPI Specification file reference to the default policy.
+     
+**Policy Configuration:**
+     
+```json
+{
+    "name": "openapi-file-reference-json",
+    "template": {
+        "name": "POLICY_TEMPLATE_NGINX_BASE"
+    },
+    "open-api-files": [
+        {
+            "filename": "file://myapi2.json"
+        }
+    ]
+}
+```
+
+Content of the referenced file `myapi2.json`:
+
+~~~json
+{
+    "openapi": "3.0.1",
+    "info": {
+        "title": "Primitive data types2",
+        "description": "Primitive data types.",
+        "version": "2.5.1"
+    },
+    "servers": [
+        {
+            "url": "http://localhost"
+        }
+    ],
+    "paths": {
+        "/query": {
+            "get": {
+                "tags": [
+                    "query_bool"
+                ],
+                "description": "query_bool",
+                "operationId": "query_bool",
+                "parameters": [
+                    {
+                        "name": "query_bool",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "NotFound"
+                    }
+                }
+            }
+        }
+    }
+}
+~~~
+
+In this case the following request will trigger an `Illegal repeated parameter name` violation, as the OpenAPI Specification doesn't allow repeated parameters. 
+
+```
+http://localhost/query?a=true&a=false
+```
+
+The request will not be blocked because this violation is set to alarm in the default policy.
+
+Refer to 
+
+
+
