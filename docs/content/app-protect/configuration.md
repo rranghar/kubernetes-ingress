@@ -235,7 +235,7 @@ Make sure to configure certificates prior to using the HTTPS protocol - see the 
 
 ##### Example Configuration
 
-In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.json` using the link ` :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml`. This will configure allowed data types for `query_int` and `query_str` parameters values.
+In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.yaml` using the link ` :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml`. This will configure allowed data types for `query_int` and `query_str` parameters values.
 
 **Policy configuration:**
 
@@ -463,7 +463,7 @@ http://localhost/query?a=true&a=false
 
 The request will not be blocked because this violation is set to alarm in the default policy.
 
-Refer to 
+Refer to the CR as explained in https://docs.nginx.com/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect
 
 
 
