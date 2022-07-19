@@ -231,7 +231,7 @@ URL reference is the method of referencing an external source by providing its f
 
 Make sure to configure certificates prior to using the HTTPS protocol - see the [External References](#https-reference) for details.
 
-## Configuration in NIC
+## Configuration in NGINX Ingress Controller
 
 1. Copy the API security policy `/etc/app_protect/conf/NginxApiSecurityPolicy.json` to a different file so that it can be edited.
 2. Add the reference to the desired OpenAPI file.
