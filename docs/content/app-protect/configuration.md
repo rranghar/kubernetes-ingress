@@ -18,7 +18,8 @@ The NGINX Ingress Controller has a set of global configuration parameters that a
 
 ## Enable App Protect for an Ingress Resource
 
-You can enable and configure NGINX App Protect on a per-Ingress-resource basis. To do so, you can apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
+You can enable and configure NGINX App Protect on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis.
+To do so, you can apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
 ## App Protect Policies
 
@@ -236,8 +237,9 @@ Make sure to configure certificates prior to using the HTTPS protocol - see the 
 1. Copy the API security policy `/etc/app_protect/conf/NginxApiSecurityPolicy.json` to a different file so that it can be edited.
 2. Add the reference to the desired OpenAPI file.
 3. Make other custom changes if needed (e.g. enable Data Guard protection).
-4. Use a tool to convert the result to YAML. there are many, for example: https://www.json2yaml.com/
-5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource. 6. Refer to [App Protect Policies](#app-protect-policies) section above.
+4. Use a tool to convert the result to YAML. There are many, for example: [`yq` utility](https://github.com/mikefarah/yq).
+5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource.
+6. Refer to [App Protect Policies](#app-protect-policies) section above.
 7. Add an annotation referencing that `APPolicy` resource and apply that resource. See the same section above.
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
@@ -261,7 +263,7 @@ apiVersion: appprotect.f5.com/v1beta1
       template:
         name: POLICY_TEMPLATE_NGINX_BASE
       open-api-files:
-      - link:  :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml
+      - link: https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml
       blocking-settings:
         violations:
         - block: true
