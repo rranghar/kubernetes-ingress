@@ -234,6 +234,8 @@ Make sure to configure certificates prior to using the HTTPS protocol - see the 
 
 ## Configuration in NGINX Ingress Controller
 
+These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingress Controller:
+
 1. Copy the API security policy `/etc/app_protect/conf/NginxApiSecurityPolicy.json` to a different file so that it can be edited.
 2. Add the reference to the desired OpenAPI file.
 3. Make other custom changes if needed (e.g. enable Data Guard protection).
