@@ -16,9 +16,9 @@ The NGINX Ingress Controller has a set of global configuration parameters that a
 
 > Check out the complete [NGINX Ingress Controller with App Protect example resources on GitHub](https://github.com/nginxinc/kubernetes-ingress/tree/v2.3.0/examples/appprotect).
 
-## Enable App Protect for an Ingress Resource
+## Enabling App Protect
 
-You can enable and configure NGINX App Protect on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis.
+You can enable and configure NGINX App Protect on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis. Refer to [Custom Resource](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#waf) examples for more details.
 To do so, you can apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
 ## App Protect Policies
@@ -368,6 +368,6 @@ http://localhost/query?query_int=abc
 
 The request will be blocked.
 
-The link option is also available in the `openApiFileReference` property and synonymous with the one above in `open-api-files`
+The `link` option is also available in the `openApiFileReference` property and is synonymous with the `open-api-files` property as seen in the App Protect policy example above.
 
 **Note**: `openApiFileReference` is not an array.
