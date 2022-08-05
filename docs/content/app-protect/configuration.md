@@ -247,7 +247,8 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 3. Make other custom changes if needed (e.g. enable Data Guard protection).
 4. Use a tool to convert the result to YAML. There are many, for example: [`yq` utility](https://github.com/mikefarah/yq).
 5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource. Refer to [App Protect Policies](#app-protect-policies) section above.
-6. Create a `Policy` object, then attach that `Policy` object to a `VirtualServer` resource.
+6. Create a `Policy` object which references the `APPolicy` Customer Resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/main/examples/custom-resources/waf/waf.yaml).
+7. Finally, attach the `Policy` object to a `VirtualServer` resource as in [this example](https://github.com/nginxinc/kubernetes-ingress/blob/main/examples/custom-resources/waf/virtual-server.yaml).
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
 
