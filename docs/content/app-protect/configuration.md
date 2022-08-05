@@ -243,7 +243,7 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 4. Use a tool to convert the result to YAML. There are many, for example: [`yq` utility](https://github.com/mikefarah/yq).
 5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource.
 6. Refer to [App Protect Policies](#app-protect-policies) section above.
-7. Add an annotation referencing that `APPolicy` resource and apply that resource. See the same section above.
+7. Create a `Policy` object, then attach that `Policy` object to a `VirtualServer` resource.
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
 
