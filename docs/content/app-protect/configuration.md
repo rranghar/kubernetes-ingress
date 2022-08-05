@@ -20,6 +20,7 @@ The NGINX Ingress Controller has a set of global configuration parameters that a
 ## Enabling App Protect
 
 You can enable and configure NGINX App Protect on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis. Refer to [Custom Resource](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#waf) examples for more details.
+
 To configure NGINX App Protect on an Ingress resource, you would apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
 ## App Protect Policies
@@ -241,9 +242,8 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 2. Add the reference to the desired OpenAPI file.
 3. Make other custom changes if needed (e.g. enable Data Guard protection).
 4. Use a tool to convert the result to YAML. There are many, for example: [`yq` utility](https://github.com/mikefarah/yq).
-5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource.
-6. Refer to [App Protect Policies](#app-protect-policies) section above.
-7. Create a `Policy` object, then attach that `Policy` object to a `VirtualServer` resource.
+5. Add the YAML properties to create an `APPolicy` Custom Resource putting the policy itself (as in step 4) within the `spec` property of the Custom Resource. Refer to [App Protect Policies](#app-protect-policies) section above.
+6. Create a `Policy` object, then attach that `Policy` object to a `VirtualServer` resource.
 
 **Note**:  You need to make sure that the server where the resource files are located is always available when you are compiling your policy.
 
