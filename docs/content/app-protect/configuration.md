@@ -21,9 +21,11 @@ The NGINX Ingress Controller has a set of global configuration parameters that a
 
 You can enable and configure NGINX App Protect on the Custom Resources (VirtualServer, VirtualServerRoute) or on the Ingress-resource basis. Refer to [Custom Resource](https://docs.nginx.com/nginx-ingress-controller/configuration/policy-resource/#waf) examples for more details.
 
+Refer to [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/waf) for Custom Resource sample.
+
 To configure NGINX App Protect on an Ingress resource, you would apply the [App Protect annotations](/nginx-ingress-controller/configuration/ingress-resources/advanced-configuration-with-annotations/#app-protect) to each desired resource.
 
-Refer to [Custom Resource](https://github.com/nginxinc/kubernetes-ingress/tree/main/examples/custom-resources/waf) for Custom Resource sample.
+
 
 ## App Protect Policies
 
