@@ -383,7 +383,7 @@ The `link` option is also available in the `openApiFileReference` property and i
 ## Configuration in WAF using Virtual Server Resource
 In this example we deploy the NGINX Plus Ingress Controller with NGINX App Protect, a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-### Prerequisites
+## Prerequisites
 
 1. Follow the installation [instructions](#https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress Controller with NGINX App Protect.
 2. Save the public IP address of the Ingress Controller into a shell variable:
