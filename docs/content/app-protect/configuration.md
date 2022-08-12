@@ -131,17 +131,17 @@ Create the application deployment and service:
 ### Step 2. Deploy the AP Policy
 
 1. Create the syslog service and pod for the App Protect security logs:
-  ```
-  $ kubectl apply -f syslog.yaml
-  ```
+    ```
+   $ kubectl apply -f syslog.yaml
+   ```
 
 2. Create the User Defined Signature, App Protect policy and log configuration:
 
-  ```
-    $ kubectl apply -f ap-apple-uds.yaml
-    $ kubectl apply -f ap-dataguard-alarm-policy.yaml
-    $ kubectl apply -f ap-logconf.yaml
-  ```
+    ```
+      $ kubectl apply -f ap-apple-uds.yaml
+      $ kubectl apply -f ap-dataguard-alarm-policy.yaml
+     $ kubectl apply -f ap-logconf.yaml
+    ```
 
 ### Step 3 - Deploy the WAF Policy
 
@@ -154,9 +154,9 @@ $ kubectl apply -f waf.yaml
 ### Step 4 - Configure Load Balancing
 
 1. Create the VirtualServer Resource:
-  ```
-  $ kubectl apply -f virtual-server.yaml
-  ```
+    ```
+    $ kubectl apply -f virtual-server.yaml
+    ```
 Note that the VirtualServer references the policy waf-policy created in Step 3.
 
 ### Step 5 - Test the Application
