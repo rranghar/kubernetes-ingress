@@ -380,7 +380,7 @@ The `link` option is also available in the `openApiFileReference` property and i
 **Note**: `openApiFileReference` is not an array.
 
 
-## Configuration in WAF using Virtual Server Resource
+## Configuration in NGINX Plus Ingress Controller using Virtual Server Resource
 In this example we deploy the NGINX Plus Ingress Controller with NGINX App Protect, a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
 ## Prerequisites
