@@ -36,7 +36,7 @@ You can define App Protect policies for your VirtualServer, VirtualServerRoute, 
 
  > **Note**: [External References](/nginx-app-protect/configuration-guide/configuration/#external-references) in the Ingress Controller are deprecated and will not be supported in future releases.
 
-To add any [App Protect policy](/nginx-app-protect/policy/#policy) to an Ingress resource:
+To add any [App Protect policy](/nginx-app-protect/declarative-policy/policy/) to an Ingress resource:
 
 1. Create an `APPolicy` Custom resource manifest.
 2. Add the desired policy to the `spec` field in the `APPolicy` resource.
@@ -253,7 +253,7 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 
 ##### Example Configuration
 
-In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.yaml` using the [link](https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml). This will configure allowed data types for `query_int` and `query_str` parameters values.
+In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.yaml` using the link ` :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml`. This will configure allowed data types for `query_int` and `query_str` parameters values.
 
 **Policy configuration:**
 
