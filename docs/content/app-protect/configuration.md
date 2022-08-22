@@ -400,9 +400,7 @@ You can find the [Virtual Server example](https://raw.githubusercontent.com/ngin
     $ IC_HTTP_PORT=<port number>
     ```
 
-### Step 1. Deploy a Web Application
-
-Please note that before starting, the user needs to clone the repo and cd into the `examples/custom-resources/waf/` directory. 
+### Step 1. Deploy a Web Application 
 
 Create the application deployment and service:
   ```
