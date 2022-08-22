@@ -253,7 +253,7 @@ These are the typical steps to deploy an OpenAPI protection Policy in NGINX Ingr
 
 ##### Example Configuration
 
-In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.yaml` using the link ` :https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml`. This will configure allowed data types for `query_int` and `query_str` parameters values.
+In this example, we are adding an OpenAPI Specification file reference to `/etc/app_protect/conf/NginxApiSecurityPolicy.yaml` using the [link](https://raw.githubusercontent.com/aws-samples/api-gateway-secure-pet-store/master/src/main/resources/swagger.yaml). This will configure allowed data types for `query_int` and `query_str` parameters values.
 
 **Policy configuration:**
 
@@ -383,9 +383,12 @@ The `link` option is also available in the `openApiFileReference` property and i
 ## Configuration in NGINX Plus Ingress Controller using Virtual Server Resource
 In this example we deploy the NGINX Plus Ingress Controller with NGINX App Protect, a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
+In this example, we are using the example from `https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml`.which can be found using the `https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/` link.
+
+
 ## Prerequisites
 
-1. Follow the installation [instructions](#https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress Controller with NGINX App Protect.
+1. Follow the installation [instructions](https://docs.nginx.com/nginx-ingress-controller/installation) to deploy the Ingress Controller with NGINX App Protect.
 2. Save the public IP address of the Ingress Controller into a shell variable:
    ```
     $ IC_IP=XXX.YYY.ZZZ.III
@@ -464,6 +467,8 @@ To access the application, curl the coffee and the tea services. We'll use the -
     ```
 
 ### Configuration Example of Virtual Server:
+
+Refer to github repo for [example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml).
 
 ```yaml
 apiVersion: k8s.nginx.org/v1
