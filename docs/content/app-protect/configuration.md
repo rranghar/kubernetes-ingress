@@ -383,8 +383,7 @@ The `link` option is also available in the `openApiFileReference` property and i
 ## Configuration in NGINX Plus Ingress Controller using Virtual Server Resource
 In this example we deploy the NGINX Plus Ingress Controller with NGINX App Protect, a simple web application and then configure load balancing and WAF protection for that application using the VirtualServer resource.
 
-In this example, we are using the example from the [github repo](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/)
-Refer to this link to access the below [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml).
+In this example, we are using the example from the github repo. Refer to this link to access the below [Virtual Server example](https://raw.githubusercontent.com/nginxinc/kubernetes-ingress/v2.3.0/examples/custom-resources/waf/webapp.yaml).
 
 ## Prerequisites
 
