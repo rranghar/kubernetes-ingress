@@ -405,6 +405,8 @@ You can find the [Virtual Server example](https://raw.githubusercontent.com/ngin
 
 ### Step 1. Deploy a Web Application
 
+Please note that before starting, the user needs to clone the repo and cd into the `examples/custom-resources/waf/` directory. 
+
 Create the application deployment and service:
   ```
   $ kubectl apply -f webapp.yaml
